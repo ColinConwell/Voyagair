@@ -6,9 +6,14 @@ Optimized, configurable path-of-least-resistance travel planner and flight finde
 
 - `voyagair/` -- Python package (library, CLI, API server, AI agent)
   - `core/` -- Core library: data models, providers, graph, search, cache, rate limiter
-  - `cli/` -- Typer CLI (`voyagair` command)
+    - `voyage/` -- Voyage configuration, location resolution, search orchestration, agents
+  - `cli/` -- Typer CLI (`voyagair` command, including `voyage` and `app` subcommands)
   - `api/` -- FastAPI backend with REST, WebSocket, and AI agent endpoints
+  - `app/` -- Vanilla HTML/CSS/JS web app (served at `/app`)
 - `frontend/` -- Vite + TypeScript web UI with Leaflet map
+  - `src/panels/` -- Voyage config, results, summary panels
+  - `src/components/` -- Reusable UI components (location autocomplete)
+- `shared/` -- Shared resources (CSS variables, region data, icons) used by both frontends
 - `docs/` -- MkDocs documentation
 - `data/` -- Static airport/route data (auto-downloaded on first run)
 
@@ -31,6 +36,8 @@ Optimized, configurable path-of-least-resistance travel planner and flight finde
 
 - `just install` -- Install the package in editable mode
 - `just dev` -- Start API server + frontend dev server
+- `just app` -- Launch the vanilla web app (opens browser)
+- `just voyage` -- Manage voyage configurations (new, list, load, delete)
 - `just cli` -- Run the CLI
 - `just test` -- Run tests
 - `just docs` -- Serve documentation locally

@@ -1,10 +1,18 @@
 import {
   FlightOffer,
   SearchParams,
+  VoyageConfig,
   getAirport,
   searchFlights,
   searchFlightsStream,
+  searchVoyageInline,
+  createVoyage,
+  listVoyages,
+  loadVoyage,
 } from "./api";
+import { createVoyageConfigPanel } from "./panels/voyage-config";
+import { createVoyageResultsPanel } from "./panels/voyage-results";
+import { createSummaryPanel } from "./panels/summary-panel";
 
 declare const L: typeof import("leaflet");
 
@@ -12,6 +20,8 @@ let map: ReturnType<typeof L.map>;
 let routeLayer: ReturnType<typeof L.layerGroup>;
 
 function initMap() {
+  const mapEl = document.getElementById("map");
+  if (!mapEl) return;
   map = L.map("map").setView([0, 20], 2);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
     attribution: "&copy; OpenStreetMap &copy; CARTO",
@@ -31,15 +41,11 @@ function computeOfferMeta(offer: FlightOffer) {
   const origin = legs.length > 0 ? legs[0].origin : "???";
   const destination = legs.length > 0 ? legs[legs.length - 1].destination : "???";
   const departure = legs.length > 0 ? legs[0].departure : "";
-  const carriers = [...new Set(legs.map((l) => l.carrier).filter(Boolean))].join(
-    ", "
-  );
+  const carriers = [...new Set(legs.map((l) => l.carrier).filter(Boolean))].join(", ");
   const numStops = Math.max(0, legs.length - 1);
 
   let totalMinutes = 0;
-  for (const leg of legs) {
-    totalMinutes += leg.duration_minutes || 0;
-  }
+  for (const leg of legs) totalMinutes += leg.duration_minutes || 0;
   if (totalMinutes === 0 && legs.length >= 2) {
     const dep = new Date(legs[0].departure).getTime();
     const arr = new Date(legs[legs.length - 1].arrival).getTime();
@@ -50,23 +56,15 @@ function computeOfferMeta(offer: FlightOffer) {
 }
 
 function addResultRow(offer: FlightOffer, tbody: HTMLTableSectionElement) {
-  const { origin, destination, departure, carriers, numStops, totalMinutes } =
-    computeOfferMeta(offer);
+  const { origin, destination, departure, carriers, numStops, totalMinutes } = computeOfferMeta(offer);
 
   const depStr = departure
-    ? new Date(departure).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+    ? new Date(departure).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
     : "N/A";
 
   const tr = document.createElement("tr");
-  const stopsClass =
-    numStops === 0 ? "stops-0" : numStops === 1 ? "stops-1" : "stops-2";
-  const stopsLabel =
-    numStops === 0 ? "Nonstop" : `${numStops} stop${numStops > 1 ? "s" : ""}`;
+  const stopsClass = numStops === 0 ? "stops-0" : numStops === 1 ? "stops-1" : "stops-2";
+  const stopsLabel = numStops === 0 ? "Nonstop" : `${numStops} stop${numStops > 1 ? "s" : ""}`;
 
   tr.innerHTML = `
     <td class="route">${origin} &rarr; ${destination}</td>
@@ -88,6 +86,7 @@ function addResultRow(offer: FlightOffer, tbody: HTMLTableSectionElement) {
 }
 
 async function drawRoute(offers: FlightOffer[]) {
+  if (!routeLayer) return;
   routeLayer.clearLayers();
   const airportCache = new Map<string, { lat: number; lon: number }>();
 
@@ -118,64 +117,32 @@ async function drawRoute(offers: FlightOffer[]) {
       bounds.push([src.lat, src.lon], [dst.lat, dst.lon]);
 
       L.polyline(
-        [
-          [src.lat, src.lon],
-          [dst.lat, dst.lon],
-        ],
-        {
-          color: "#58a6ff",
-          weight: 2,
-          opacity: 0.6,
-          dashArray: "6 4",
-        }
+        [[src.lat, src.lon], [dst.lat, dst.lon]],
+        { color: "#58a6ff", weight: 2, opacity: 0.6, dashArray: "6 4" }
       ).addTo(routeLayer);
     }
   }
 
   for (const [code, pos] of airportCache) {
     L.circleMarker([pos.lat, pos.lon], {
-      radius: 5,
-      color: "#58a6ff",
-      fillColor: "#58a6ff",
-      fillOpacity: 0.8,
-      weight: 1,
+      radius: 5, color: "#58a6ff", fillColor: "#58a6ff", fillOpacity: 0.8, weight: 1,
     })
-      .bindTooltip(code, {
-        permanent: true,
-        direction: "top",
-        className: "airport-tooltip",
-      })
+      .bindTooltip(code, { permanent: true, direction: "top", className: "airport-tooltip" })
       .addTo(routeLayer);
   }
 
-  if (bounds.length > 0) {
-    map.fitBounds(bounds, { padding: [40, 40] });
-  }
+  if (bounds.length > 0) map.fitBounds(bounds, { padding: [40, 40] });
 }
 
 function buildSearchParams(): SearchParams {
-  const origins = (document.getElementById("origins") as HTMLInputElement).value
-    .split(",")
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean);
-  const destinations = (
-    document.getElementById("destinations") as HTMLInputElement
-  ).value
-    .split(",")
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean);
+  const origins = (document.getElementById("origins") as HTMLInputElement).value.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
+  const destinations = (document.getElementById("destinations") as HTMLInputElement).value.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
   const dateVal = (document.getElementById("dates") as HTMLInputElement).value;
-  const adults = parseInt(
-    (document.getElementById("adults") as HTMLInputElement).value
-  );
+  const adults = parseInt((document.getElementById("adults") as HTMLInputElement).value);
   const cabin = (document.getElementById("cabin") as HTMLSelectElement).value;
-  const maxStopsVal = (
-    document.getElementById("max-stops") as HTMLSelectElement
-  ).value;
+  const maxStopsVal = (document.getElementById("max-stops") as HTMLSelectElement).value;
   const sort = (document.getElementById("sort") as HTMLSelectElement).value;
-  const maxPriceVal = (
-    document.getElementById("max-price") as HTMLInputElement
-  ).value;
+  const maxPriceVal = (document.getElementById("max-price") as HTMLInputElement).value;
 
   return {
     origins,
@@ -191,60 +158,171 @@ function buildSearchParams(): SearchParams {
   };
 }
 
+type AppView = "landing" | "search" | "voyage";
+
+function showView(view: AppView) {
+  document.querySelectorAll("[data-view]").forEach((el) => {
+    (el as HTMLElement).style.display = (el as HTMLElement).dataset.view === view ? "" : "none";
+  });
+  if (view === "landing") {
+    document.getElementById("summary-container")?.classList.remove("open");
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
+  showView("landing");
 
-  const form = document.getElementById("search-form") as HTMLFormElement;
-  const tbody = document.getElementById("results-body") as HTMLTableSectionElement;
-  const status = document.getElementById("results-status") as HTMLDivElement;
-  const count = document.getElementById("results-count") as HTMLSpanElement;
-  const searchBtn = document.getElementById("search-btn") as HTMLButtonElement;
-  const streamMode = document.getElementById("stream-mode") as HTMLInputElement;
+  const voyageConfigContainer = document.getElementById("voyage-config-container");
+  const voyageResultsContainer = document.getElementById("voyage-results-container");
+  const summaryContainer = document.getElementById("summary-container");
+  const savedVoyagesList = document.getElementById("saved-voyages-list");
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const params = buildSearchParams();
+  let voyageResultsPanel: ReturnType<typeof createVoyageResultsPanel> | null = null;
+  let summaryPanel: ReturnType<typeof createSummaryPanel> | null = null;
 
-    if (params.origins.length === 0 || params.destinations.length === 0) {
-      status.textContent = "Please enter origin and destination airports.";
-      status.className = "results-status error";
-      return;
+  if (summaryContainer) {
+    summaryPanel = createSummaryPanel(summaryContainer);
+  }
+
+  document.getElementById("btn-new-voyage")?.addEventListener("click", () => {
+    showView("voyage");
+    if (voyageConfigContainer) {
+      createVoyageConfigPanel({
+        container: voyageConfigContainer,
+        onSearch: handleVoyageSearch,
+        onSave: handleVoyageSave,
+      });
     }
-
-    tbody.innerHTML = "";
-    count.textContent = "";
-    searchBtn.disabled = true;
-
-    const allOffers: FlightOffer[] = [];
-
-    if (streamMode.checked) {
-      status.textContent = "Searching... results will appear as they arrive.";
-      status.className = "results-status loading";
-
-      searchFlightsStream(
-        params,
-        (offer) => {
-          allOffers.push(offer);
-          addResultRow(offer, tbody);
-          count.textContent = `${allOffers.length} results`;
-        },
-        (total) => {
-          status.textContent = `Search complete.`;
-          status.className = "results-status";
-          count.textContent = `${total} results`;
-          searchBtn.disabled = false;
-          drawRoute(allOffers);
-        },
-        (error) => {
-          status.textContent = `Stream error: ${error}. Trying REST fallback...`;
-          status.className = "results-status error";
-          doRestSearch(params, tbody, status, count, searchBtn, allOffers);
-        }
-      );
-    } else {
-      doRestSearch(params, tbody, status, count, searchBtn, allOffers);
+    if (voyageResultsContainer) {
+      voyageResultsPanel = createVoyageResultsPanel(voyageResultsContainer);
     }
   });
+
+  document.getElementById("btn-load-voyage")?.addEventListener("click", async () => {
+    if (!savedVoyagesList) return;
+    const voyages = await listVoyages();
+    if (voyages.length === 0) {
+      savedVoyagesList.innerHTML = '<p class="empty-list">No saved voyages.</p>';
+      savedVoyagesList.style.display = "block";
+      return;
+    }
+    savedVoyagesList.innerHTML = voyages
+      .map((v) => `<button class="saved-voyage-item" data-id="${v.id}">${v.name}<span class="voyage-date">${new Date(v.updated_at).toLocaleDateString()}</span></button>`)
+      .join("");
+    savedVoyagesList.style.display = "block";
+
+    savedVoyagesList.querySelectorAll(".saved-voyage-item").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = (btn as HTMLElement).dataset.id;
+        if (!id) return;
+        const config = await loadVoyage(id);
+        if (!config) return;
+        showView("voyage");
+        if (voyageConfigContainer) {
+          const panel = createVoyageConfigPanel({
+            container: voyageConfigContainer,
+            onSearch: handleVoyageSearch,
+            onSave: handleVoyageSave,
+          });
+          panel.loadConfig(config);
+        }
+        if (voyageResultsContainer) {
+          voyageResultsPanel = createVoyageResultsPanel(voyageResultsContainer);
+        }
+        savedVoyagesList.style.display = "none";
+      });
+    });
+  });
+
+  document.getElementById("btn-quick-search")?.addEventListener("click", () => {
+    showView("search");
+  });
+
+  document.querySelectorAll(".btn-back-landing").forEach((btn) => {
+    btn.addEventListener("click", () => showView("landing"));
+  });
+
+  async function handleVoyageSearch(config: VoyageConfig) {
+    if (!voyageResultsPanel) return;
+    voyageResultsPanel.showLoading();
+    summaryPanel?.open();
+    summaryPanel?.clear();
+
+    try {
+      const response = await searchVoyageInline(config);
+      if (!response) {
+        voyageResultsPanel.showError("Search returned no response.");
+        return;
+      }
+
+      voyageResultsPanel.showResults(response.results);
+      drawRoute(response.results.flight_options);
+
+      if (response.results.agent_summary || response.results.travel_agent_findings) {
+        summaryPanel?.showSummary(response.results);
+      } else if (response.voyage_id) {
+        summaryPanel?.streamSummary(response.voyage_id, response.results);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      voyageResultsPanel.showError(`Search failed: ${msg}`);
+    }
+  }
+
+  async function handleVoyageSave(config: VoyageConfig) {
+    try {
+      const result = await createVoyage(config);
+      const statusEl = document.getElementById("vr-status");
+      if (statusEl) {
+        statusEl.textContent = `Saved as "${result.name}" (${result.id.slice(0, 8)}...)`;
+        statusEl.className = "results-status";
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("Save failed:", msg);
+    }
+  }
+
+  const form = document.getElementById("search-form") as HTMLFormElement | null;
+  if (form) {
+    const tbody = document.getElementById("results-body") as HTMLTableSectionElement;
+    const status = document.getElementById("results-status") as HTMLDivElement;
+    const count = document.getElementById("results-count") as HTMLSpanElement;
+    const searchBtn = document.getElementById("search-btn") as HTMLButtonElement;
+    const streamMode = document.getElementById("stream-mode") as HTMLInputElement;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const params = buildSearchParams();
+
+      if (params.origins.length === 0 || params.destinations.length === 0) {
+        status.textContent = "Please enter origin and destination airports.";
+        status.className = "results-status error";
+        return;
+      }
+
+      tbody.innerHTML = "";
+      count.textContent = "";
+      searchBtn.disabled = true;
+
+      const allOffers: FlightOffer[] = [];
+
+      if (streamMode.checked) {
+        status.textContent = "Searching... results will appear as they arrive.";
+        status.className = "results-status loading";
+
+        searchFlightsStream(
+          params,
+          (offer) => { allOffers.push(offer); addResultRow(offer, tbody); count.textContent = `${allOffers.length} results`; },
+          (total) => { status.textContent = "Search complete."; status.className = "results-status"; count.textContent = `${total} results`; searchBtn.disabled = false; drawRoute(allOffers); },
+          (error) => { status.textContent = `Stream error: ${error}. Trying REST fallback...`; status.className = "results-status error"; doRestSearch(params, tbody, status, count, searchBtn, allOffers); }
+        );
+      } else {
+        doRestSearch(params, tbody, status, count, searchBtn, allOffers);
+      }
+    });
+  }
 });
 
 async function doRestSearch(
@@ -270,8 +348,9 @@ async function doRestSearch(
     status.textContent = "Search complete.";
     status.className = "results-status";
     drawRoute(allOffers);
-  } catch (err: any) {
-    status.textContent = `Error: ${err.message}`;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    status.textContent = `Error: ${msg}`;
     status.className = "results-status error";
   } finally {
     searchBtn.disabled = false;

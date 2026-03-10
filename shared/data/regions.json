@@ -1,0 +1,20 @@
+{
+  "Europe": ["AL","AD","AT","BY","BE","BA","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IS","IE","IT","XK","LV","LI","LT","LU","MT","MD","ME","NL","MK","NO","PL","PT","RO","RS","SK","SI","ES","SE","CH","UA","GB"],
+  "Western Europe": ["AT","BE","FR","DE","IE","LI","LU","MC","NL","CH","GB"],
+  "Eastern Europe": ["BY","BG","CZ","HU","MD","PL","RO","SK","UA"],
+  "Scandinavia": ["DK","FI","IS","NO","SE"],
+  "North America": ["US","CA","MX"],
+  "Central America": ["BZ","CR","SV","GT","HN","NI","PA"],
+  "Caribbean": ["AG","BS","BB","CU","DM","DO","GD","HT","JM","KN","LC","VC","TT","PR","VI"],
+  "South America": ["AR","BO","BR","CL","CO","EC","GY","PY","PE","SR","UY","VE"],
+  "East Africa": ["BI","KM","DJ","ER","ET","KE","MG","MW","MU","MZ","RW","SC","SO","SS","TZ","UG"],
+  "Southern Africa": ["BW","LS","NA","ZA","SZ","ZM","ZW"],
+  "West Africa": ["BJ","BF","CV","CI","GM","GH","GN","GW","LR","ML","MR","NE","NG","SN","SL","TG"],
+  "North Africa": ["DZ","EG","LY","MA","SD","TN"],
+  "Middle East": ["BH","IQ","IR","IL","JO","KW","LB","OM","PS","QA","SA","SY","AE","YE"],
+  "Central Asia": ["KZ","KG","TJ","TM","UZ"],
+  "South Asia": ["AF","BD","BT","IN","MV","NP","PK","LK"],
+  "Southeast Asia": ["BN","KH","ID","LA","MY","MM","PH","SG","TH","TL","VN"],
+  "East Asia": ["CN","HK","JP","KP","KR","MO","MN","TW"],
+  "Oceania": ["AU","FJ","KI","MH","FM","NR","NZ","PW","PG","WS","SB","TO","TV","VU"]
+}

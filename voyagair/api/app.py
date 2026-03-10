@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from voyagair.api.deps import set_orchestrator
-from voyagair.api.routes import agent, airports, plan, search, ws
+from voyagair.api.routes import agent, airports, plan, search, voyage, ws
 from voyagair.core.config import get_config
 from voyagair.core.graph.airports import get_airport_db
 from voyagair.core.search.orchestrator import SearchOrchestrator
@@ -41,20 +41,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.get("/api/health")
+async def health():
+    return {"status": "ok", "version": "0.1.0"}
+
+
 app.include_router(search.router, prefix="/api/search", tags=["search"])
 app.include_router(plan.router, prefix="/api/plan", tags=["plan"])
 app.include_router(airports.router, prefix="/api/airports", tags=["airports"])
 app.include_router(ws.router, prefix="/api/ws", tags=["websocket"])
 app.include_router(agent.router, prefix="/api/agent", tags=["agent"])
+app.include_router(voyage.router, prefix="/api/voyage", tags=["voyage"])
+
+from voyagair.app.serve import router as app_router, mount_app_static
+
+app.include_router(app_router, prefix="/app", tags=["app"])
+mount_app_static(app)
 
 frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
 if frontend_dist.exists():
     app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
-
-
-@app.get("/api/health")
-async def health():
-    return {"status": "ok", "version": "0.1.0"}
 
 
 def run():

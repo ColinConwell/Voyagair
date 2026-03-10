@@ -323,5 +323,139 @@ def serve(
     uvicorn.run("voyagair.api.app:app", host=host, port=port, reload=reload)
 
 
+@app.command(name="app")
+def launch_app(
+    host: str = typer.Option("0.0.0.0", "--host", help="Bind host"),
+    port: int = typer.Option(8000, "--port", "-p", help="Bind port"),
+    no_browser: bool = typer.Option(False, "--no-browser", help="Don't open browser automatically"),
+) -> None:
+    """Launch the vanilla web app and open it in your browser."""
+    import webbrowser
+
+    import uvicorn
+
+    url = f"http://localhost:{port}/app"
+    if not no_browser:
+        import threading
+        threading.Timer(1.5, lambda: webbrowser.open(url)).start()
+
+    console.print(f"[bold]Starting Voyagair app at {url}[/bold]")
+    uvicorn.run("voyagair.api.app:app", host=host, port=port, reload=False)
+
+
+voyage_app = typer.Typer(name="voyage", help="Manage voyage configurations.", no_args_is_help=True)
+app.add_typer(voyage_app)
+
+
+@voyage_app.command(name="new")
+def voyage_new(
+    name: str = typer.Option("Untitled Voyage", "--name", "-n", help="Name for the voyage"),
+    origin: Optional[str] = typer.Option(None, "--from", help="Starting point (IATA code)"),
+    destination: Optional[str] = typer.Option(None, "--to", help="End point (IATA code)"),
+) -> None:
+    """Create a new voyage configuration."""
+    from voyagair.core.voyage.models import LocationSpec, LocationType, VoyageConfig
+    from voyagair.core.voyage.store import get_voyage_store
+
+    config = VoyageConfig(name=name)
+    if origin:
+        config.starting_points.append(
+            LocationSpec(type=LocationType.AIRPORT, value=origin.upper(), label=origin.upper())
+        )
+    if destination:
+        config.end_points.append(
+            LocationSpec(type=LocationType.AIRPORT, value=destination.upper(), label=destination.upper())
+        )
+
+    store = get_voyage_store()
+    voyage_id = store.save(config)
+    console.print(f"[green]Created voyage:[/green] {config.name} ({voyage_id[:8]}...)")
+
+
+@voyage_app.command(name="list")
+def voyage_list() -> None:
+    """List all saved voyages."""
+    from voyagair.core.voyage.store import get_voyage_store
+
+    store = get_voyage_store()
+    voyages = store.list()
+
+    if not voyages:
+        console.print("[yellow]No saved voyages.[/yellow]")
+        return
+
+    table = Table(title=f"Saved Voyages ({len(voyages)})")
+    table.add_column("ID", style="dim", width=10)
+    table.add_column("Name", style="cyan")
+    table.add_column("Updated", style="green")
+
+    for v in voyages:
+        vid = v["id"][:8] + "..."
+        table.add_row(vid, v["name"], v.get("updated_at", "")[:19])
+    console.print(table)
+
+
+@voyage_app.command(name="load")
+def voyage_load(
+    voyage_id: str = typer.Argument(..., help="Voyage ID (or prefix)"),
+) -> None:
+    """Load and display a saved voyage configuration."""
+    from voyagair.core.voyage.store import get_voyage_store
+
+    store = get_voyage_store()
+
+    config = store.load(voyage_id)
+    if config is None:
+        voyages = store.list()
+        matches = [v for v in voyages if v["id"].startswith(voyage_id)]
+        if len(matches) == 1:
+            config = store.load(matches[0]["id"])
+        elif len(matches) > 1:
+            console.print(f"[yellow]Multiple matches for '{voyage_id}':[/yellow]")
+            for m in matches:
+                console.print(f"  {m['id'][:8]}... {m['name']}")
+            return
+        else:
+            console.print(f"[red]Voyage '{voyage_id}' not found.[/red]")
+            return
+
+    if config is None:
+        console.print(f"[red]Failed to load voyage.[/red]")
+        return
+
+    starts = ", ".join(f"{s.type.value}:{s.value}" for s in config.starting_points) or "None"
+    ends = ", ".join(f"{e.type.value}:{e.value}" for e in config.end_points) or "None"
+    sites = ", ".join(f"{s.type.value}:{s.value}" for s in config.sites_along_the_way) or "None"
+
+    console.print(Panel(
+        f"[bold]{config.name}[/bold]\n"
+        f"ID: [dim]{config.id}[/dim]\n"
+        f"From: [cyan]{starts}[/cyan]\n"
+        f"To: [cyan]{ends}[/cyan]\n"
+        f"Sites: {sites}\n"
+        f"Dates: {config.departure_date or 'TBD'} - {config.return_date or 'TBD'}\n"
+        f"Budget: {config.cost_budget.currency} {config.cost_budget.max_total or 'unlimited'}\n"
+        f"Time: {config.time_budget.total_days} days\n"
+        f"Agent: {'Enabled' if config.travel_agent.enabled else 'Disabled'}",
+        title="Voyage Configuration",
+        border_style="cyan",
+    ))
+
+
+@voyage_app.command(name="delete")
+def voyage_delete(
+    voyage_id: str = typer.Argument(..., help="Voyage ID to delete"),
+) -> None:
+    """Delete a saved voyage."""
+    from voyagair.core.voyage.store import get_voyage_store
+
+    store = get_voyage_store()
+    deleted = store.delete(voyage_id)
+    if deleted:
+        console.print(f"[green]Deleted voyage {voyage_id[:8]}...[/green]")
+    else:
+        console.print(f"[red]Voyage '{voyage_id}' not found.[/red]")
+
+
 if __name__ == "__main__":
     app()

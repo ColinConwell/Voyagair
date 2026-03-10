@@ -60,6 +60,14 @@ airports *ARGS:
 explore *ARGS:
     .venv/bin/voyagair explore {{ARGS}}
 
+# Launch the vanilla web app (opens browser)
+app *ARGS:
+    .venv/bin/voyagair app {{ARGS}}
+
+# Manage voyages
+voyage *ARGS:
+    .venv/bin/voyagair voyage {{ARGS}}
+
 # ─── Testing & Quality ─────────────────────────────────
 
 # Run tests

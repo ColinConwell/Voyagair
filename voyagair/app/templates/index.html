@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voyagair</title>
+  <link rel="stylesheet" href="/app/static/css/app.css" />
+</head>
+<body>
+  <div class="header">
+    <h1 class="logo">Voyagair</h1>
+    <p class="tagline">Path-of-least-resistance travel planner</p>
+  </div>
+
+  <div class="app-body">
+    <div class="main-content">
+
+      <!-- Landing -->
+      <div class="view active" data-view="landing">
+        <div class="landing">
+          <h2>Plan Your Voyage</h2>
+          <p class="subtitle">Configure a multi-point trip with budgets, agents, and notifications.</p>
+          <div class="landing-actions">
+            <button class="btn btn-primary" id="btn-new">New Voyage</button>
+            <button class="btn btn-secondary" id="btn-load">Load Voyage</button>
+          </div>
+          <div id="saved-list" class="saved-list"></div>
+        </div>
+      </div>
+
+      <!-- Voyage -->
+      <div class="view" data-view="voyage">
+        <div style="margin-bottom:8px"><button class="btn btn-ghost btn-back">Back</button></div>
+        <div id="config-container"></div>
+        <div id="results-container" style="margin-top:24px"></div>
+      </div>
+
+    </div>
+
+    <aside id="summary-sidebar" class="summary-sidebar"></aside>
+  </div>
+
+  <script src="/app/static/js/location-input.js"></script>
+  <script src="/app/static/js/voyage-config.js"></script>
+  <script src="/app/static/js/voyage-results.js"></script>
+  <script src="/app/static/js/summary-panel.js"></script>
+  <script src="/app/static/js/app.js"></script>
+</body>
+</html>

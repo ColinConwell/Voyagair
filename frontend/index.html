@@ -17,98 +17,145 @@
         </div>
       </header>
 
-      <main class="main">
-        <section class="search-panel">
-          <form id="search-form" class="search-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="origins">From</label>
-                <input type="text" id="origins" placeholder="CPT, JNB" required />
-              </div>
-              <div class="form-group">
-                <label for="destinations">To</label>
-                <input type="text" id="destinations" placeholder="JFK, EWR" required />
-              </div>
-              <div class="form-group">
-                <label for="dates">Date</label>
-                <input type="date" id="dates" required />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-sm">
-                <label for="adults">Passengers</label>
-                <input type="number" id="adults" value="1" min="1" max="9" />
-              </div>
-              <div class="form-group form-group-sm">
-                <label for="cabin">Cabin</label>
-                <select id="cabin">
-                  <option value="economy">Economy</option>
-                  <option value="premium_economy">Premium Economy</option>
-                  <option value="business">Business</option>
-                  <option value="first">First</option>
-                </select>
-              </div>
-              <div class="form-group form-group-sm">
-                <label for="max-stops">Max Stops</label>
-                <select id="max-stops">
-                  <option value="">Any</option>
-                  <option value="0">Nonstop</option>
-                  <option value="1">1 stop</option>
-                  <option value="2">2 stops</option>
-                </select>
-              </div>
-              <div class="form-group form-group-sm">
-                <label for="sort">Sort By</label>
-                <select id="sort">
-                  <option value="price">Price</option>
-                  <option value="duration">Duration</option>
-                  <option value="stops">Stops</option>
-                </select>
-              </div>
-              <div class="form-group form-group-sm">
-                <label for="max-price">Max Price</label>
-                <input type="number" id="max-price" placeholder="No limit" />
-              </div>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary" id="search-btn">Search Flights</button>
-              <label class="stream-toggle">
-                <input type="checkbox" id="stream-mode" checked />
-                <span>Stream results</span>
-              </label>
-            </div>
-          </form>
-        </section>
+      <div class="app-body">
+        <main class="main">
 
-        <section class="results-panel">
-          <div class="results-header">
-            <h2 id="results-title">Results</h2>
-            <span id="results-count" class="results-count"></span>
-          </div>
-          <div id="results-status" class="results-status"></div>
-          <div id="results-table-container" class="results-table-container">
-            <table id="results-table" class="results-table">
-              <thead>
-                <tr>
-                  <th>Route</th>
-                  <th>Date</th>
-                  <th>Carrier</th>
-                  <th>Stops</th>
-                  <th>Duration</th>
-                  <th>Price</th>
-                  <th>Source</th>
-                </tr>
-              </thead>
-              <tbody id="results-body"></tbody>
-            </table>
-          </div>
-        </section>
+          <!-- Landing View -->
+          <section data-view="landing" class="landing-view">
+            <div class="landing-hero">
+              <h2>Plan Your Voyage</h2>
+              <p class="landing-subtitle">Configure a multi-point trip or run a quick flight search.</p>
+              <div class="landing-actions">
+                <button class="btn btn-primary btn-lg" id="btn-new-voyage">New Voyage</button>
+                <button class="btn btn-secondary btn-lg" id="btn-load-voyage">Load Voyage</button>
+                <button class="btn btn-ghost btn-lg" id="btn-quick-search">Quick Search</button>
+              </div>
+              <div id="saved-voyages-list" class="saved-voyages-list" style="display:none"></div>
+            </div>
+          </section>
 
-        <section class="map-panel">
-          <h2>Route Map</h2>
-          <div id="map" class="map"></div>
-        </section>
-      </main>
+          <!-- Voyage View -->
+          <section data-view="voyage" style="display:none" class="voyage-view">
+            <div class="view-toolbar">
+              <button class="btn btn-ghost btn-back-landing">Back</button>
+            </div>
+            <div class="voyage-layout">
+              <div class="voyage-left">
+                <div id="voyage-config-container"></div>
+                <div id="voyage-results-container" class="voyage-results-wrap"></div>
+              </div>
+              <div class="voyage-map-column">
+                <section class="map-panel">
+                  <h2>Route Map</h2>
+                  <div id="map" class="map"></div>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <!-- Quick Search View -->
+          <section data-view="search" style="display:none" class="search-view">
+            <div class="view-toolbar">
+              <button class="btn btn-ghost btn-back-landing">Back</button>
+            </div>
+
+            <section class="search-panel">
+              <form id="search-form" class="search-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="origins">From</label>
+                    <input type="text" id="origins" placeholder="CPT, JNB" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="destinations">To</label>
+                    <input type="text" id="destinations" placeholder="JFK, EWR" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="dates">Date</label>
+                    <input type="date" id="dates" required />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group form-group-sm">
+                    <label for="adults">Passengers</label>
+                    <input type="number" id="adults" value="1" min="1" max="9" />
+                  </div>
+                  <div class="form-group form-group-sm">
+                    <label for="cabin">Cabin</label>
+                    <select id="cabin">
+                      <option value="economy">Economy</option>
+                      <option value="premium_economy">Premium Economy</option>
+                      <option value="business">Business</option>
+                      <option value="first">First</option>
+                    </select>
+                  </div>
+                  <div class="form-group form-group-sm">
+                    <label for="max-stops">Max Stops</label>
+                    <select id="max-stops">
+                      <option value="">Any</option>
+                      <option value="0">Nonstop</option>
+                      <option value="1">1 stop</option>
+                      <option value="2">2 stops</option>
+                    </select>
+                  </div>
+                  <div class="form-group form-group-sm">
+                    <label for="sort">Sort By</label>
+                    <select id="sort">
+                      <option value="price">Price</option>
+                      <option value="duration">Duration</option>
+                      <option value="stops">Stops</option>
+                    </select>
+                  </div>
+                  <div class="form-group form-group-sm">
+                    <label for="max-price">Max Price</label>
+                    <input type="number" id="max-price" placeholder="No limit" />
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary" id="search-btn">Search Flights</button>
+                  <label class="stream-toggle">
+                    <input type="checkbox" id="stream-mode" checked />
+                    <span>Stream results</span>
+                  </label>
+                </div>
+              </form>
+            </section>
+
+            <section class="results-panel">
+              <div class="results-header">
+                <h2 id="results-title">Results</h2>
+                <span id="results-count" class="results-count"></span>
+              </div>
+              <div id="results-status" class="results-status"></div>
+              <div class="results-table-container">
+                <table class="results-table">
+                  <thead>
+                    <tr>
+                      <th>Route</th>
+                      <th>Date</th>
+                      <th>Carrier</th>
+                      <th>Stops</th>
+                      <th>Duration</th>
+                      <th>Price</th>
+                      <th>Source</th>
+                    </tr>
+                  </thead>
+                  <tbody id="results-body"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="map-panel">
+              <h2>Route Map</h2>
+              <div id="map-search" class="map"></div>
+            </section>
+          </section>
+
+        </main>
+
+        <!-- Summary Side Panel -->
+        <aside id="summary-container" class="summary-container"></aside>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
