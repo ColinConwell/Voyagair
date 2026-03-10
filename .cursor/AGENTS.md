@@ -8,12 +8,14 @@ Optimized, configurable path-of-least-resistance travel planner and flight finde
   - `core/` -- Core library: data models, providers, graph, search, cache, rate limiter
     - `voyage/` -- Voyage configuration, location resolution, search orchestration, agents
   - `cli/` -- Typer CLI (`voyagair` command, including `voyage` and `app` subcommands)
-  - `api/` -- FastAPI backend with REST, WebSocket, and AI agent endpoints
+  - `api/` -- FastAPI backend with REST, WebSocket, AI agent, and debug endpoints
   - `app/` -- Vanilla HTML/CSS/JS web app (served at `/app`)
 - `frontend/` -- Vite + TypeScript web UI with Leaflet map
-  - `src/panels/` -- Voyage config, results, summary panels
+  - `src/panels/` -- Voyage config, results, summary, debug panels
   - `src/components/` -- Reusable UI components (location autocomplete)
-- `shared/` -- Shared resources (CSS variables, region data, icons) used by both frontends
+- `shared/` -- Shared resources (CSS variables, schema files, icons) used by both frontends
+- `.cursor/rules/` -- Cursor project rules
+- `.cursor/skills/` -- Cursor skills (travel-agent-mcp, flight-search-provider, voyagair-ui)
 - `docs/` -- MkDocs documentation
 - `data/` -- Static airport/route data (auto-downloaded on first run)
 
@@ -47,3 +49,5 @@ Optimized, configurable path-of-least-resistance travel planner and flight finde
 - No emojis in code or docs unless explicitly requested.
 - Minimal comments -- only for non-obvious intent.
 - Use `ruff` for formatting and linting.
+- Dark theme is default; light theme via `[data-theme="light"]` on `<html>`.
+- Theme preference persisted in localStorage (`voyagair-theme`).

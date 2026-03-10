@@ -1,0 +1,38 @@
+---
+description: Voyagair project conventions and coding standards
+globs: **/*.{py,ts,js,css,html}
+---
+
+# Voyagair Project Rules
+
+## Python
+- Use Pydantic v2 models for all data structures
+- All provider and search code must be async
+- Use LiteLLM for LLM calls (supports OpenAI, Anthropic, Gemini)
+- Config loaded from `.env.local` or `.env` via python-dotenv
+- Rate limiting via pyrate-limiter, caching via diskcache
+- Default LLM model configurable via LLM_MODEL env var
+
+## TypeScript/Frontend
+- Vite + TypeScript frontend in `frontend/`
+- Vanilla HTML/CSS/JS app in `voyagair/app/`
+- Shared resources in `shared/` (CSS variables, schema files)
+- No frameworks -- vanilla DOM manipulation with typed APIs
+- Location inputs use grouped autocomplete (airports, cities, countries, regions)
+
+## Style
+- No emojis in code or docs unless explicitly requested
+- Minimal comments -- only for non-obvious intent
+- Use ruff for Python formatting/linting
+- Dark theme as default, light theme supported via data-theme attribute
+
+## API
+- FastAPI REST + WebSocket endpoints under `/api/`
+- Vanilla app served at `/app/`
+- Voyage CRUD: POST /api/voyage/new, GET /api/voyage/list, etc.
+- Flight search: POST /api/search/flights, WS /api/ws/search
+
+## MCP Integration
+- Travel Agent uses MCP tools for supplemental flight information
+- Built-in tools wrap existing Voyagair search providers
+- External MCP servers configurable via VoyageConfig.travel_agent.mcp_servers

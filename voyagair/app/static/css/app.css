@@ -19,6 +19,24 @@
   --font-mono: "SF Mono", "Cascadia Code", "Fira Code", monospace;
 }
 
+[data-theme="light"] {
+  --bg: #f6f8fa;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f0f2f5;
+  --bg-overlay: #e8eaed;
+  --border: #d0d7de;
+  --text-primary: #1f2328;
+  --text-secondary: #656d76;
+  --text-muted: #8b949e;
+  --accent: #0969da;
+  --accent-hover: #0550ae;
+  --accent-dim: #ddf4ff;
+  --success: #1a7f37;
+  --warning: #9a6700;
+  --danger: #cf222e;
+  --price: #953800;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -27,17 +45,31 @@ body {
   color: var(--text-primary);
   line-height: 1.5;
   min-height: 100vh;
+  transition: background 0.2s, color 0.2s;
 }
 
 .header {
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 16px 24px;
+}
+
+.header-left {
   display: flex;
   align-items: baseline;
   gap: 16px;
-  max-width: 1200px;
-  margin: 0 auto;
+}
+
+.theme-toggle {
+  flex-shrink: 0;
 }
 
 .logo { font-size: 24px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
@@ -90,6 +122,10 @@ body {
 .config-panel {
   background: var(--bg-surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 20px;
+}
+
+[data-theme="light"] .config-panel {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .voyage-name {
@@ -163,6 +199,10 @@ body {
   background: var(--bg-surface); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   max-height: 300px; overflow-y: auto; z-index: 100; display: none;
+}
+
+[data-theme="light"] .loc-dropdown {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 .loc-dropdown.open { display: block; }
 .dd-section { border-bottom: 1px solid var(--border); }

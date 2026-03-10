@@ -13,6 +13,7 @@ import {
 import { createVoyageConfigPanel } from "./panels/voyage-config";
 import { createVoyageResultsPanel } from "./panels/voyage-results";
 import { createSummaryPanel } from "./panels/summary-panel";
+import { createDebugPanel } from "./panels/debug-panel";
 
 declare const L: typeof import("leaflet");
 
@@ -169,21 +170,84 @@ function showView(view: AppView) {
   }
 }
 
+type VoyageLayout = "split" | "stacked";
+
+function setVoyageLayout(layout: VoyageLayout) {
+  const el = document.getElementById("voyage-layout");
+  if (!el) return;
+  el.dataset.layout = layout;
+  localStorage.setItem("voyagair-layout", layout);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem("voyagair-theme");
+  if (saved === "light" || saved === "dark") {
+    document.documentElement.dataset.theme = saved;
+  }
+  updateMapTiles();
+}
+
+function toggleTheme() {
+  const current = document.documentElement.dataset.theme;
+  const next = current === "light" ? "dark" : "light";
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem("voyagair-theme", next);
+  updateMapTiles();
+}
+
+function updateMapTiles() {
+  if (!map) return;
+  const theme = document.documentElement.dataset.theme;
+  const tileUrl = theme === "light"
+    ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+  map.eachLayer((layer: unknown) => {
+    if (layer && typeof layer === "object" && "_url" in (layer as Record<string, unknown>)) {
+      map.removeLayer(layer as L.Layer);
+    }
+  });
+  L.tileLayer(tileUrl, {
+    attribution: "&copy; OpenStreetMap &copy; CARTO",
+    maxZoom: 18,
+  }).addTo(map);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
   initMap();
   showView("landing");
+
+  const savedLayout = (localStorage.getItem("voyagair-layout") || "split") as VoyageLayout;
+  setVoyageLayout(savedLayout);
 
   const voyageConfigContainer = document.getElementById("voyage-config-container");
   const voyageResultsContainer = document.getElementById("voyage-results-container");
   const summaryContainer = document.getElementById("summary-container");
+  const debugContainer = document.getElementById("debug-panel");
   const savedVoyagesList = document.getElementById("saved-voyages-list");
 
   let voyageResultsPanel: ReturnType<typeof createVoyageResultsPanel> | null = null;
   let summaryPanel: ReturnType<typeof createSummaryPanel> | null = null;
+  let debugPanel: ReturnType<typeof createDebugPanel> | null = null;
 
   if (summaryContainer) {
     summaryPanel = createSummaryPanel(summaryContainer);
   }
+
+  if (debugContainer) {
+    debugPanel = createDebugPanel(debugContainer);
+  }
+
+  document.getElementById("btn-theme-toggle")?.addEventListener("click", toggleTheme);
+
+  document.getElementById("btn-layout-toggle")?.addEventListener("click", () => {
+    const current = (localStorage.getItem("voyagair-layout") || "split") as VoyageLayout;
+    setVoyageLayout(current === "split" ? "stacked" : "split");
+  });
+
+  document.getElementById("btn-debug-toggle")?.addEventListener("click", () => {
+    debugPanel?.toggle();
+  });
 
   document.getElementById("btn-new-voyage")?.addEventListener("click", () => {
     showView("voyage");

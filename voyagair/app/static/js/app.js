@@ -10,6 +10,21 @@ function showView(name) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const themeKey = "voyagair-theme";
+  const saved = localStorage.getItem(themeKey) || "dark";
+  document.documentElement.dataset.theme = saved;
+
+  const themeBtn = document.querySelector(".theme-toggle");
+  if (themeBtn) {
+    themeBtn.textContent = saved === "light" ? "Dark" : "Light";
+    themeBtn.onclick = () => {
+      const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem(themeKey, next);
+      themeBtn.textContent = next === "light" ? "Dark" : "Light";
+    };
+  }
+
   showView("landing");
 
   let resultsPanel = null;

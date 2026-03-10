@@ -12,8 +12,21 @@
     <div id="app">
       <header class="header">
         <div class="header-inner">
-          <h1 class="logo">Voyagair</h1>
-          <p class="tagline">Path-of-least-resistance travel planner</p>
+          <div class="header-left">
+            <h1 class="logo">Voyagair</h1>
+            <p class="tagline">Path-of-least-resistance travel planner</p>
+          </div>
+          <div class="header-controls">
+            <button class="btn-icon" id="btn-layout-toggle" title="Toggle layout">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="9" width="14" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+            </button>
+            <button class="btn-icon" id="btn-debug-toggle" title="Debug panel">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M13 3l-1.5 1.5M4.5 11.5L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
+            </button>
+            <button class="btn-icon" id="btn-theme-toggle" title="Toggle theme">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -39,7 +52,7 @@
             <div class="view-toolbar">
               <button class="btn btn-ghost btn-back-landing">Back</button>
             </div>
-            <div class="voyage-layout">
+            <div class="voyage-layout" id="voyage-layout">
               <div class="voyage-left">
                 <div id="voyage-config-container"></div>
                 <div id="voyage-results-container" class="voyage-results-wrap"></div>
@@ -155,6 +168,9 @@
 
         <!-- Summary Side Panel -->
         <aside id="summary-container" class="summary-container"></aside>
+
+        <!-- Debug Panel -->
+        <aside id="debug-panel" class="debug-panel"></aside>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

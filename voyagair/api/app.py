@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from voyagair.api.deps import set_orchestrator
-from voyagair.api.routes import agent, airports, plan, search, voyage, ws
+from voyagair.api.routes import agent, airports, debug, plan, search, voyage, ws
 from voyagair.core.config import get_config
 from voyagair.core.graph.airports import get_airport_db
 from voyagair.core.search.orchestrator import SearchOrchestrator
@@ -53,6 +53,7 @@ app.include_router(airports.router, prefix="/api/airports", tags=["airports"])
 app.include_router(ws.router, prefix="/api/ws", tags=["websocket"])
 app.include_router(agent.router, prefix="/api/agent", tags=["agent"])
 app.include_router(voyage.router, prefix="/api/voyage", tags=["voyage"])
+app.include_router(debug.router, prefix="/api/debug", tags=["debug"])
 
 from voyagair.app.serve import router as app_router, mount_app_static
 
