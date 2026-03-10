@@ -2,7 +2,7 @@ FROM python:3.11-slim AS backend
 
 WORKDIR /app
 COPY pyproject.toml .
-COPY src/ src/
+COPY voyagair/ voyagair/
 COPY data/ data/
 RUN pip install --no-cache-dir .
 

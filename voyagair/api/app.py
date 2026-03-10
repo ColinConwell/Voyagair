@@ -47,7 +47,7 @@ app.include_router(airports.router, prefix="/api/airports", tags=["airports"])
 app.include_router(ws.router, prefix="/api/ws", tags=["websocket"])
 app.include_router(agent.router, prefix="/api/agent", tags=["agent"])
 
-frontend_dist = Path(__file__).parent.parent.parent.parent / "frontend" / "dist"
+frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
 if frontend_dist.exists():
     app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
 

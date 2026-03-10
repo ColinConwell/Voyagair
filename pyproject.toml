@@ -9,7 +9,7 @@ description = "Optimized, configurable path-of-least-resistance travel planner a
 readme = "README.md"
 license = "GPL-3.0-or-later"
 requires-python = ">=3.11"
-authors = [{ name = "developer", email = "developer@dev.com" }]
+authors = [{ name = "Colin Conwell", email = "colinconwell@gmail.com" }]
 dependencies = [
     "httpx[http2]",
     "pydantic>=2.0",
@@ -29,6 +29,7 @@ dependencies = [
     "geopy",
     "pandas",
     "jinja2",
+    "python-dotenv",
 ]
 
 [project.scripts]
@@ -38,11 +39,4 @@ voyagair = "voyagair.cli.app:app"
 dev = ["pytest", "pytest-asyncio", "ruff", "mypy"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/voyagair"]
-
-[tool.ruff]
-line-length = 100
-target-version = "py311"
-
-[tool.ruff.lint]
-select = ["E", "F", "I"]
+packages = ["voyagair"]

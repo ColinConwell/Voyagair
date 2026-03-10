@@ -6,7 +6,15 @@ import os
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
+
+_project_root = Path(__file__).parent.parent.parent
+for _env_file in (".env.local", ".env"):
+    _candidate = _project_root / _env_file
+    if _candidate.exists():
+        load_dotenv(_candidate)
+        break
 
 
 class ProviderConfig(BaseModel):
@@ -58,7 +66,7 @@ class SerpAPIConfig(ProviderConfig):
 
 class LLMConfig(BaseModel):
     provider: str = "openai"
-    model: str = "gpt-4o"
+    model: str = "gpt-5.4"
     api_key: str = ""
     temperature: float = 0.3
 
@@ -77,7 +85,7 @@ class VoyagairConfig(BaseModel):
     serpapi: SerpAPIConfig = Field(default_factory=SerpAPIConfig)
     llm: LLMConfig = Field(default_factory=LLMConfig)
     cache: CacheConfig = Field(default_factory=CacheConfig)
-    data_dir: str = str(Path(__file__).parent.parent.parent.parent / "data")
+    data_dir: str = str(Path(__file__).parent.parent.parent / "data")
 
     @classmethod
     def from_env(cls) -> VoyagairConfig:
@@ -100,7 +108,7 @@ class VoyagairConfig(BaseModel):
             ),
             llm=LLMConfig(
                 provider=os.getenv("LLM_PROVIDER", "openai"),
-                model=os.getenv("LLM_MODEL", "gpt-4o"),
+                model=os.getenv("LLM_MODEL", "gpt-5.4"),
                 api_key=os.getenv("LLM_API_KEY", os.getenv("OPENAI_API_KEY", "")),
             ),
             cache=CacheConfig(

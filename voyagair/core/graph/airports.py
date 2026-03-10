@@ -77,7 +77,7 @@ class AirportDatabase:
 
     async def load(self, data_dir: str | Path | None = None) -> None:
         """Load airport and route data, downloading if not cached locally."""
-        data_dir = Path(data_dir) if data_dir else Path(__file__).parent.parent.parent.parent.parent / "data"
+        data_dir = Path(data_dir) if data_dir else Path(__file__).parent.parent.parent.parent / "data"
         data_dir.mkdir(parents=True, exist_ok=True)
 
         airports_file = data_dir / "airports.csv"

@@ -267,7 +267,7 @@ def explore(
     prompt: Optional[str] = typer.Argument(
         None, help="Describe your travel scenario (or omit for interactive mode)",
     ),
-    model: str = typer.Option("gpt-4o", "--model", "-m", help="LLM model to use"),
+    model: str = typer.Option("gpt-5.4", "--model", "-m", help="LLM model to use"),
     provider: str = typer.Option("openai", "--provider", help="LLM provider: openai, anthropic, ollama"),
 ) -> None:
     """AI-assisted interactive exploration of travel options."""
