@@ -1,0 +1,54 @@
+name: "Cape Town Return to US"
+from:
+  - type: city
+    value: Cape Town
+to:
+  - type: airport
+    value: BOS
+  - type: airport
+    value: JFK
+  - type: airport
+    value: PHL
+  - type: airport
+    value: ATL
+departure_date: "2026-03-11"
+flexible_dates: true
+adults: 1
+cabin_class: economy
+budget:
+  max_total: 2500
+  currency: USD
+max_stops: 1
+time_budget:
+  total_days: 7
+stops:
+  - type: city
+    value: Johannesburg
+    label: "Johannesburg"
+  - type: airport
+    value: KMI
+    label: "Kruger National Park"
+  - type: airport
+    value: VFA
+    label: "Victoria Falls"
+  - type: airport
+    value: MUB
+    label: "Maun (Okavango Delta)"
+  - type: city
+    value: Windhoek
+    label: "Windhoek (Sossusvlei)"
+layover_regions:
+  - West Africa
+  - Europe
+  - South America
+avoid_airlines:
+  - ET
+  - EK
+  - QR
+  - TK
+avoid_routing_regions:
+  - Middle East
+notes: >
+  Looking to return to the US as soon as possible within budget.
+  Open to spending up to a week visiting tourist destinations
+  that may offer better return flights.

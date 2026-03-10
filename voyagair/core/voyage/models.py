@@ -94,10 +94,15 @@ class VoyageConfig(BaseModel):
     sites_along_the_way: list[LocationSpec] = Field(default_factory=list)
     departure_date: str | None = None
     return_date: str | None = None
+    flexible_dates: bool = False
     adults: int = 1
     cabin_class: CabinClass = CabinClass.ECONOMY
     time_budget: TimeBudget = Field(default_factory=TimeBudget)
     cost_budget: CostBudget = Field(default_factory=CostBudget)
+    avoid_airlines: list[str] = Field(default_factory=list)
+    avoid_routing_regions: list[str] = Field(default_factory=list)
+    layover_regions: list[str] = Field(default_factory=list)
+    notes: str | None = None
     travel_agent: TravelAgentConfig = Field(default_factory=TravelAgentConfig)
     save_refresh: SaveRefreshConfig = Field(default_factory=SaveRefreshConfig)
     optimize_for: SortKey = SortKey.PRICE

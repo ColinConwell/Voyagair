@@ -1012,6 +1012,29 @@ body {
   color: var(--danger);
 }
 
+.results-export {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.btn-sm {
+  padding: 5px 14px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-sm:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--bg-surface);
+}
+
 .results-table-container {
   overflow-x: auto;
 }

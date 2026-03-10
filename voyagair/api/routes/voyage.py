@@ -1,12 +1,14 @@
-"""Voyage API endpoints: CRUD, search, and summary streaming."""
+"""Voyage API endpoints: CRUD, search, summary streaming, report, and config parsing."""
 
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
+from typing import Literal
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse, PlainTextResponse, Response
 from pydantic import BaseModel
 
 from voyagair.core.config import get_config
@@ -33,6 +35,17 @@ class VoyageSearchResponse(BaseModel):
     transport_count: int
     search_duration_seconds: float
     results: VoyageResults
+
+
+class ReportRequest(BaseModel):
+    config: VoyageConfig | None = None
+    results: VoyageResults | None = None
+    format: Literal["html", "md", "pdf"] = "html"
+
+
+class ParseConfigRequest(BaseModel):
+    content: str
+    format: Literal["yaml", "json", "markdown", "auto"] = "auto"
 
 
 @router.post("/new")
@@ -146,6 +159,89 @@ async def search_voyage_inline(config: VoyageConfig) -> VoyageSearchResponse:
         search_duration_seconds=results.search_duration_seconds,
         results=results,
     )
+
+
+@router.post("/parse-config")
+async def parse_config_endpoint(req: ParseConfigRequest):
+    """Parse a YAML/JSON/Markdown config string into a VoyageConfig."""
+    from voyagair.core.voyage.config_parser import parse_config
+
+    try:
+        config = parse_config(req.content, fmt=req.format)
+        return config.model_dump()
+    except Exception as e:
+        logger.error("Config parse failed: %s", e)
+        return {"error": str(e)}
+
+
+@router.post("/report")
+async def generate_report_endpoint(req: ReportRequest):
+    """Generate a report from config + optional results. Runs search if results not provided."""
+    from voyagair.core.voyage.report import generate_report
+
+    config = req.config
+    results = req.results
+
+    if config is None:
+        return {"error": "config is required"}
+
+    if results is None:
+        app_config = get_config()
+        search_orch = VoyageSearchOrchestrator(config=app_config)
+        try:
+            results = await search_orch.search(config)
+        finally:
+            await search_orch.close()
+
+        try:
+            results.agent_summary = await generate_summary(config, results)
+        except Exception as e:
+            logger.error("Summary generation failed: %s", e)
+
+    refresh_url = f"/api/voyage/{config.id}/report"
+    report = generate_report(config, results, fmt=req.format, refresh_url=refresh_url)
+
+    if req.format == "pdf":
+        return Response(content=report, media_type="application/pdf",
+                        headers={"Content-Disposition": f"attachment; filename={config.id[:8]}-report.pdf"})
+    if req.format == "md":
+        return PlainTextResponse(report, media_type="text/markdown")
+    return HTMLResponse(report)
+
+
+@router.post("/{voyage_id}/report")
+async def generate_saved_report(voyage_id: str, req: ReportRequest | None = None):
+    """Generate a report for a saved voyage. Runs search automatically."""
+    from voyagair.core.voyage.report import generate_report
+
+    fmt = req.format if req else "html"
+
+    store = get_voyage_store()
+    config = store.load(voyage_id)
+    if config is None:
+        return {"error": f"Voyage {voyage_id} not found"}
+
+    app_config = get_config()
+    search_orch = VoyageSearchOrchestrator(config=app_config)
+    try:
+        results = await search_orch.search(config)
+    finally:
+        await search_orch.close()
+
+    try:
+        results.agent_summary = await generate_summary(config, results)
+    except Exception as e:
+        logger.error("Summary generation failed: %s", e)
+
+    refresh_url = f"/api/voyage/{voyage_id}/report"
+    report = generate_report(config, results, fmt=fmt, refresh_url=refresh_url)
+
+    if fmt == "pdf":
+        return Response(content=report, media_type="application/pdf",
+                        headers={"Content-Disposition": f"attachment; filename={voyage_id[:8]}-report.pdf"})
+    if fmt in ("md", "markdown"):
+        return PlainTextResponse(report, media_type="text/markdown")
+    return HTMLResponse(report)
 
 
 @router.websocket("/ws/summary/{voyage_id}")

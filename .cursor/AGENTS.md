@@ -7,8 +7,8 @@ Optimized, configurable path-of-least-resistance travel planner and flight finde
 - `voyagair/` -- Python package (library, CLI, API server, AI agent)
   - `core/` -- Core library: data models, providers, graph, search, cache, rate limiter
     - `voyage/` -- Voyage configuration, location resolution, search orchestration, agents
-  - `cli/` -- Typer CLI (`voyagair` command, including `voyage` and `app` subcommands)
-  - `api/` -- FastAPI backend with REST, WebSocket, AI agent, and debug endpoints
+  - `cli/` -- Typer CLI (`voyagair` command, including `voyage`, `app`, `search`, `plan`, `explore` subcommands)
+  - `api/` -- FastAPI backend with REST, WebSocket, AI agent, debug, report, and config-parse endpoints
   - `app/` -- Vanilla HTML/CSS/JS web app (served at `/app`)
 - `frontend/` -- Vite + TypeScript web UI with Leaflet map
   - `src/panels/` -- Voyage config, results, summary, debug panels
@@ -16,6 +16,7 @@ Optimized, configurable path-of-least-resistance travel planner and flight finde
 - `shared/` -- Shared resources (CSS variables, schema files, icons) used by both frontends
 - `.cursor/rules/` -- Cursor project rules
 - `.cursor/skills/` -- Cursor skills (travel-agent-mcp, flight-search-provider, voyagair-ui)
+- `examples/` -- Sample config files (YAML/JSON/Markdown) for the voyage report pipeline
 - `docs/` -- MkDocs documentation
 - `data/` -- Static airport/route data (auto-downloaded on first run)
 
@@ -39,7 +40,8 @@ Optimized, configurable path-of-least-resistance travel planner and flight finde
 - `just install` -- Install the package in editable mode
 - `just dev` -- Start API server + frontend dev server
 - `just app` -- Launch the vanilla web app (opens browser)
-- `just voyage` -- Manage voyage configurations (new, list, load, delete)
+- `just voyage` -- Manage voyage configurations (new, list, load, delete, parse, run)
+- `just report <config>` -- Generate a voyage report from a config file
 - `just cli` -- Run the CLI
 - `just test` -- Run tests
 - `just docs` -- Serve documentation locally

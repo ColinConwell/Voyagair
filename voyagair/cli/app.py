@@ -457,5 +457,110 @@ def voyage_delete(
         console.print(f"[red]Voyage '{voyage_id}' not found.[/red]")
 
 
+@voyage_app.command(name="parse")
+def voyage_parse(
+    config_file: str = typer.Argument(..., help="Path to config file (YAML, JSON, or Markdown)"),
+) -> None:
+    """Parse a config file and display the interpreted VoyageConfig."""
+    from voyagair.core.voyage.config_parser import parse_config_file
+
+    try:
+        config = parse_config_file(config_file)
+    except Exception as e:
+        console.print(f"[red]Failed to parse config: {e}[/red]")
+        raise typer.Exit(1)
+
+    starts = ", ".join(f"{s.type.value}:{s.value}" for s in config.starting_points) or "None"
+    ends = ", ".join(f"{e.type.value}:{e.value}" for e in config.end_points) or "None"
+    sites = ", ".join(f"{s.label or s.value}" for s in config.sites_along_the_way) or "None"
+
+    console.print(Panel(
+        f"[bold]{config.name}[/bold]\n"
+        f"From: [cyan]{starts}[/cyan]\n"
+        f"To: [cyan]{ends}[/cyan]\n"
+        f"Sites: {sites}\n"
+        f"Date: {config.departure_date or 'TBD'}"
+        f"{' (flexible)' if config.flexible_dates else ''}\n"
+        f"Budget: {config.cost_budget.currency} {config.cost_budget.max_total or 'unlimited'}\n"
+        f"Time: {config.time_budget.total_days} days\n"
+        f"Avoid airlines: {', '.join(config.avoid_airlines) or 'None'}\n"
+        f"Avoid regions: {', '.join(config.avoid_routing_regions) or 'None'}\n"
+        f"Layover regions: {', '.join(config.layover_regions) or 'None'}\n"
+        f"Notes: {(config.notes or 'None')[:200]}",
+        title="Parsed Voyage Config",
+        border_style="cyan",
+    ))
+
+
+@voyage_app.command(name="run")
+def voyage_run(
+    config_file: str = typer.Argument(..., help="Path to config file (YAML, JSON, or Markdown)"),
+    fmt: str = typer.Option("html", "--format", "-f", help="Output format: html, md, pdf"),
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
+    no_open: bool = typer.Option(False, "--no-open", help="Don't open the report in a browser"),
+) -> None:
+    """Run a full voyage pipeline: parse config, search, generate report."""
+    from pathlib import Path
+
+    from voyagair.core.voyage.config_parser import parse_config_file
+    from voyagair.core.voyage.report import generate_report
+    from voyagair.core.voyage.search import VoyageSearchOrchestrator
+    from voyagair.core.voyage.summary_agent import generate_summary
+    from voyagair.core.voyage.store import get_voyage_store
+
+    try:
+        config = parse_config_file(config_file)
+    except Exception as e:
+        console.print(f"[red]Failed to parse config: {e}[/red]")
+        raise typer.Exit(1)
+
+    console.print(f"[bold]Voyage:[/bold] {config.name}")
+    console.print(f"  From: {', '.join(s.value for s in config.starting_points)}")
+    console.print(f"  To: {', '.join(e.value for e in config.end_points)}")
+
+    store = get_voyage_store()
+    store.save(config)
+
+    async def _run():
+        app_config = get_config()
+        search_orch = VoyageSearchOrchestrator(config=app_config)
+        try:
+            results = await search_orch.search(config)
+        finally:
+            await search_orch.close()
+
+        try:
+            results.agent_summary = await generate_summary(config, results)
+        except Exception as e:
+            console.print(f"[yellow]Summary generation skipped: {e}[/yellow]")
+
+        return results
+
+    with console.status("[bold]Searching flights and generating summary...", spinner="dots"):
+        results = asyncio.run(_run())
+
+    console.print(f"[green]Found {len(results.flight_options)} flights in {results.search_duration_seconds:.1f}s[/green]")
+
+    refresh_url = f"/api/voyage/{config.id}/report"
+    report = generate_report(config, results, fmt=fmt, refresh_url=refresh_url)
+
+    ext_map = {"html": ".html", "md": ".md", "pdf": ".pdf"}
+    if output is None:
+        slug = config.name.lower().replace(" ", "-")[:30]
+        output = f"{slug}-report{ext_map.get(fmt, '.html')}"
+
+    out_path = Path(output)
+    if isinstance(report, bytes):
+        out_path.write_bytes(report)
+    else:
+        out_path.write_text(report, encoding="utf-8")
+
+    console.print(f"[green]Report saved to:[/green] {out_path}")
+
+    if not no_open and fmt == "html":
+        import webbrowser
+        webbrowser.open(f"file://{out_path.resolve()}")
+
+
 if __name__ == "__main__":
     app()

@@ -220,6 +220,9 @@ body {
 .results-status.loading { color: var(--accent); animation: pulse 1.5s infinite; }
 .results-status.error { color: var(--danger); }
 
+.results-export { display: flex; gap: 8px; margin-bottom: 12px; }
+.btn-sm { padding: 5px 14px; font-size: 12px; }
+
 .results-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .results-table thead th {
   text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border);

@@ -68,6 +68,10 @@ app *ARGS:
 voyage *ARGS:
     .venv/bin/voyagair voyage {{ARGS}}
 
+# Generate a voyage report from a config file
+report CONFIG *OPTS:
+    .venv/bin/voyagair voyage run {{CONFIG}} {{OPTS}}
+
 # ─── Testing & Quality ─────────────────────────────────
 
 # Run tests

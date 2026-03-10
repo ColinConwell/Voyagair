@@ -9,6 +9,7 @@ import {
   createVoyage,
   listVoyages,
   loadVoyage,
+  parseConfigFile,
 } from "./api";
 import { createVoyageConfigPanel } from "./panels/voyage-config";
 import { createVoyageResultsPanel } from "./panels/voyage-results";
@@ -303,6 +304,36 @@ document.addEventListener("DOMContentLoaded", () => {
     showView("search");
   });
 
+  const configFileInput = document.getElementById("config-file-input") as HTMLInputElement | null;
+  configFileInput?.addEventListener("change", async () => {
+    const file = configFileInput.files?.[0];
+    if (!file) return;
+    const content = await file.text();
+    const ext = file.name.split(".").pop()?.toLowerCase() || "auto";
+    const fmtMap: Record<string, "yaml" | "json" | "markdown" | "auto"> = {
+      yaml: "yaml", yml: "yaml", json: "json", md: "markdown", markdown: "markdown",
+    };
+    try {
+      const config = await parseConfigFile(content, fmtMap[ext] || "auto");
+      showView("voyage");
+      if (voyageConfigContainer) {
+        const panel = createVoyageConfigPanel({
+          container: voyageConfigContainer,
+          onSearch: handleVoyageSearch,
+          onSave: handleVoyageSave,
+        });
+        panel.loadConfig(config);
+      }
+      if (voyageResultsContainer) {
+        voyageResultsPanel = createVoyageResultsPanel(voyageResultsContainer);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Failed to parse config file: ${msg}`);
+    }
+    configFileInput.value = "";
+  });
+
   document.querySelectorAll(".btn-back-landing").forEach((btn) => {
     btn.addEventListener("click", () => showView("landing"));
   });
@@ -320,7 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      voyageResultsPanel.showResults(response.results);
+      voyageResultsPanel.showResults(response.results, config);
       drawRoute(response.results.flight_options);
 
       if (response.results.agent_summary || response.results.travel_agent_findings) {

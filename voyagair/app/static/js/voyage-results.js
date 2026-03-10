@@ -6,6 +6,11 @@ function createVoyageResults(container) {
         <span class="results-count" id="vr-count"></span>
       </div>
       <div id="vr-status" class="results-status"></div>
+      <div class="results-export" id="vr-export" style="display:none">
+        <button class="btn btn-sm" data-fmt="html">Export HTML</button>
+        <button class="btn btn-sm" data-fmt="md">Export Markdown</button>
+        <button class="btn btn-sm" data-fmt="pdf">Export PDF</button>
+      </div>
       <div style="overflow-x:auto">
         <table class="results-table">
           <thead><tr><th>Route</th><th>Date</th><th>Carrier</th><th>Stops</th><th>Duration</th><th>Price</th><th>Source</th></tr></thead>
@@ -18,6 +23,40 @@ function createVoyageResults(container) {
   const tbody = document.getElementById("vr-body");
   const countEl = document.getElementById("vr-count");
   const statusEl = document.getElementById("vr-status");
+  const exportEl = document.getElementById("vr-export");
+
+  let _lastConfig = null;
+  let _lastResults = null;
+
+  exportEl.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-fmt]");
+    if (!btn || !_lastConfig) return;
+    const fmt = btn.dataset.fmt;
+    btn.textContent = "Exporting...";
+    btn.disabled = true;
+    try {
+      const resp = await fetch("/api/voyage/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ config: _lastConfig, results: _lastResults, format: fmt }),
+      });
+      if (!resp.ok) throw new Error(resp.statusText);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      if (fmt === "html") {
+        window.open(url, "_blank");
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "voyage-report." + (fmt === "md" ? "md" : fmt);
+        a.click();
+      }
+    } catch (err) {
+      statusEl.textContent = "Export failed: " + err.message;
+    }
+    btn.textContent = "Export " + fmt.toUpperCase();
+    btn.disabled = false;
+  });
 
   function fmt(min) {
     const h = Math.floor(min / 60), m = min % 60;
@@ -44,15 +83,19 @@ function createVoyageResults(container) {
   }
 
   return {
-    showLoading() { statusEl.textContent = "Searching..."; statusEl.className = "results-status loading"; tbody.innerHTML = ""; countEl.textContent = ""; },
-    showResults(results) {
+    showLoading() { statusEl.textContent = "Searching..."; statusEl.className = "results-status loading"; tbody.innerHTML = ""; countEl.textContent = ""; exportEl.style.display = "none"; },
+    showResults(results, config) {
+      _lastResults = results;
+      _lastConfig = config || _lastConfig;
       tbody.innerHTML = "";
       (results.flight_options || []).forEach(addRow);
       countEl.textContent = (results.flight_options || []).length + " flights";
       statusEl.textContent = "Search complete.";
       statusEl.className = "results-status";
+      if ((results.flight_options || []).length > 0) exportEl.style.display = "flex";
     },
     showError(msg) { statusEl.textContent = msg; statusEl.className = "results-status error"; },
-    clear() { tbody.innerHTML = ""; countEl.textContent = ""; statusEl.textContent = ""; },
+    clear() { tbody.innerHTML = ""; countEl.textContent = ""; statusEl.textContent = ""; exportEl.style.display = "none"; },
+    setConfig(config) { _lastConfig = config; },
   };
 }

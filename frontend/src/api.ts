@@ -105,10 +105,15 @@ export interface VoyageConfig {
   sites_along_the_way: LocationSpec[];
   departure_date: string | null;
   return_date: string | null;
+  flexible_dates: boolean;
   adults: number;
   cabin_class: string;
   time_budget: TimeBudget;
   cost_budget: CostBudget;
+  avoid_airlines: string[];
+  avoid_routing_regions: string[];
+  layover_regions: string[];
+  notes: string | null;
   travel_agent: TravelAgentConfig;
   save_refresh: SaveRefreshConfig;
   optimize_for: string;
@@ -328,4 +333,33 @@ export function streamVoyageSummary(
   };
 
   return ws;
+}
+
+export async function generateReport(
+  config: VoyageConfig,
+  results: VoyageResults | null,
+  format: "html" | "md" | "pdf" = "html"
+): Promise<Blob> {
+  const resp = await fetch(`${API_BASE}/voyage/report`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ config, results, format }),
+  });
+  if (!resp.ok) throw new Error(`Report generation failed: ${resp.statusText}`);
+  return resp.blob();
+}
+
+export async function parseConfigFile(
+  content: string,
+  format: "yaml" | "json" | "markdown" | "auto" = "auto"
+): Promise<VoyageConfig> {
+  const resp = await fetch(`${API_BASE}/voyage/parse-config`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content, format }),
+  });
+  if (!resp.ok) throw new Error(`Config parse failed: ${resp.statusText}`);
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error);
+  return data as VoyageConfig;
 }

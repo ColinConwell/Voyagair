@@ -1,4 +1,5 @@
-import type { FlightOffer, VoyageResults } from "../api";
+import type { FlightOffer, VoyageConfig, VoyageResults } from "../api";
+import { generateReport } from "../api";
 
 export function createVoyageResultsPanel(container: HTMLElement) {
   container.innerHTML = `
@@ -9,6 +10,11 @@ export function createVoyageResultsPanel(container: HTMLElement) {
         <span class="results-duration" id="vr-duration"></span>
       </div>
       <div id="vr-status" class="results-status"></div>
+      <div class="results-export" id="vr-export" style="display:none">
+        <button class="btn btn-sm" data-fmt="html">Export HTML</button>
+        <button class="btn btn-sm" data-fmt="md">Export Markdown</button>
+        <button class="btn btn-sm" data-fmt="pdf">Export PDF</button>
+      </div>
       <div class="results-table-container">
         <table class="results-table">
           <thead>
@@ -32,6 +38,36 @@ export function createVoyageResultsPanel(container: HTMLElement) {
   const countEl = container.querySelector("#vr-count") as HTMLSpanElement;
   const durationEl = container.querySelector("#vr-duration") as HTMLSpanElement;
   const statusEl = container.querySelector("#vr-status") as HTMLDivElement;
+  const exportEl = container.querySelector("#vr-export") as HTMLDivElement;
+
+  let _config: VoyageConfig | null = null;
+  let _results: VoyageResults | null = null;
+
+  exportEl.addEventListener("click", async (e) => {
+    const btn = (e.target as HTMLElement).closest("[data-fmt]") as HTMLButtonElement | null;
+    if (!btn || !_config) return;
+    const fmt = btn.dataset.fmt as "html" | "md" | "pdf";
+    const origText = btn.textContent;
+    btn.textContent = "Exporting...";
+    btn.disabled = true;
+    try {
+      const blob = await generateReport(_config, _results, fmt);
+      const url = URL.createObjectURL(blob);
+      if (fmt === "html") {
+        window.open(url, "_blank");
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `voyage-report.${fmt}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      statusEl.textContent = `Export failed: ${(err as Error).message}`;
+    }
+    btn.textContent = origText;
+    btn.disabled = false;
+  });
 
   function formatDuration(minutes: number): string {
     const h = Math.floor(minutes / 60);
@@ -89,8 +125,11 @@ export function createVoyageResultsPanel(container: HTMLElement) {
       tbody.innerHTML = "";
       countEl.textContent = "";
       durationEl.textContent = "";
+      exportEl.style.display = "none";
     },
-    showResults: (results: VoyageResults) => {
+    showResults: (results: VoyageResults, config?: VoyageConfig) => {
+      _results = results;
+      if (config) _config = config;
       tbody.innerHTML = "";
       for (const offer of results.flight_options) {
         addRow(offer);
@@ -102,6 +141,7 @@ export function createVoyageResultsPanel(container: HTMLElement) {
       durationEl.textContent = `(${results.search_duration_seconds.toFixed(1)}s)`;
       statusEl.textContent = "Search complete.";
       statusEl.className = "results-status";
+      if (results.flight_options.length > 0) exportEl.style.display = "flex";
     },
     showError: (msg: string) => {
       statusEl.textContent = msg;
@@ -113,6 +153,10 @@ export function createVoyageResultsPanel(container: HTMLElement) {
       durationEl.textContent = "";
       statusEl.textContent = "";
       statusEl.className = "results-status";
+      exportEl.style.display = "none";
+    },
+    setConfig: (config: VoyageConfig) => {
+      _config = config;
     },
   };
 }

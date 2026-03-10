@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ config.name }} -- Voyagair Report</title>
+<style>
+:root {
+  --bg: #0e1117;
+  --bg-surface: #161b22;
+  --bg-card: #1c2128;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-dim: #1f3a5f;
+  --border: #30363d;
+  --green: #3fb950;
+  --yellow: #d29922;
+  --red: #f85149;
+  --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+}
+
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-surface: #f6f8fa;
+  --bg-card: #ffffff;
+  --text: #1f2328;
+  --text-muted: #656d76;
+  --accent: #0969da;
+  --accent-dim: #ddf4ff;
+  --border: #d0d7de;
+  --green: #1a7f37;
+  --yellow: #9a6700;
+  --red: #cf222e;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  transition: background 0.3s, color 0.3s;
+}
+
+.container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+header h1 { font-size: 1.5rem; font-weight: 600; }
+header .meta { font-size: 0.85rem; color: var(--text-muted); }
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.2s;
+}
+button:hover { background: var(--bg-card); }
+button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.summary {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  white-space: pre-wrap;
+}
+.summary h2 { margin-bottom: 0.75rem; font-size: 1.2rem; }
+
+.config-summary {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+.config-summary dt { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.config-summary dd { font-weight: 500; }
+
+/* Calendar */
+.calendar-section { margin-bottom: 2rem; }
+.calendar-section h2 { margin-bottom: 1rem; font-size: 1.2rem; }
+.calendar-nav { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem; }
+.calendar-nav .month-label { font-weight: 600; min-width: 140px; text-align: center; }
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.calendar-grid .day-header {
+  background: var(--bg-card);
+  padding: 0.4rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.calendar-grid .day {
+  background: var(--bg-surface);
+  padding: 0.4rem;
+  min-height: 70px;
+  position: relative;
+  font-size: 0.75rem;
+}
+.calendar-grid .day.empty { background: var(--bg); }
+.calendar-grid .day .day-num {
+  font-weight: 600;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.calendar-grid .day.has-flights { background: var(--accent-dim); }
+.flight-chip {
+  display: block;
+  font-size: 0.65rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-top: 2px;
+  text-decoration: none;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.flight-chip:hover { background: var(--accent); color: #fff; }
+
+/* Flight table */
+.flights-section { margin-bottom: 2rem; }
+.flights-section h2 { margin-bottom: 1rem; font-size: 1.2rem; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 2px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+tr:hover { background: var(--bg-surface); }
+a.book-link { color: var(--accent); text-decoration: none; }
+a.book-link:hover { text-decoration: underline; }
+
+.price { font-weight: 600; color: var(--green); }
+.stops-0 { color: var(--green); }
+.stops-1 { color: var(--yellow); }
+.stops-2 { color: var(--red); }
+
+footer {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  margin-top: 2rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.refresh-status { font-size: 0.75rem; color: var(--text-muted); }
+
+@media (max-width: 640px) {
+  .config-summary { grid-template-columns: 1fr 1fr; }
+  .calendar-grid .day { min-height: 50px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <h1>{{ config.name }}</h1>
+      <div class="meta">Generated {{ generated_at }} | {{ flight_count }} flight option{{ "s" if flight_count != 1 else "" }}</div>
+    </div>
+    <div class="controls">
+      <button onclick="toggleTheme()" id="theme-btn">Light</button>
+      {% if refresh_url %}
+      <button onclick="refreshReport()" id="refresh-btn">Refresh</button>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- Config Summary -->
+  <div class="config-summary">
+    <div><dt>From</dt><dd>{{ origins_label }}</dd></div>
+    <div><dt>To</dt><dd>{{ destinations_label }}</dd></div>
+    <div><dt>Date</dt><dd>{{ config.departure_date or "Flexible" }}{% if config.flexible_dates %} (flexible){% endif %}</dd></div>
+    <div><dt>Budget</dt><dd>{{ config.cost_budget.currency }} {{ "{:,.0f}".format(config.cost_budget.max_total) if config.cost_budget.max_total else "Unlimited" }}</dd></div>
+    {% if config.avoid_airlines %}
+    <div><dt>Avoid Airlines</dt><dd>{{ config.avoid_airlines | join(", ") }}</dd></div>
+    {% endif %}
+    {% if config.avoid_routing_regions %}
+    <div><dt>Avoid Regions</dt><dd>{{ config.avoid_routing_regions | join(", ") }}</dd></div>
+    {% endif %}
+    {% if config.time_budget.total_days %}
+    <div><dt>Time Budget</dt><dd>{{ config.time_budget.total_days }} days</dd></div>
+    {% endif %}
+  </div>
+
+  <!-- Narrative Summary -->
+  {% if summary %}
+  <section class="summary">
+    <h2>Summary</h2>
+    <div id="summary-body">{{ summary }}</div>
+  </section>
+  {% endif %}
+
+  <!-- Calendar View -->
+  {% if flight_dates %}
+  <section class="calendar-section">
+    <h2>Calendar</h2>
+    <div class="calendar-nav">
+      <button onclick="prevMonth()">&larr;</button>
+      <span class="month-label" id="month-label"></span>
+      <button onclick="nextMonth()">&rarr;</button>
+    </div>
+    <div class="calendar-grid" id="calendar-grid"></div>
+  </section>
+  {% endif %}
+
+  <!-- Flights Table -->
+  <section class="flights-section">
+    <h2>Flight Options</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Route</th>
+          <th>Date</th>
+          <th>Carrier</th>
+          <th>Stops</th>
+          <th>Duration</th>
+          <th>Price</th>
+          <th>Book</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in flights %}
+        <tr>
+          <td>{{ f.origin }} &rarr; {{ f.destination }}</td>
+          <td>{{ f.departure_str }}</td>
+          <td>{{ f.carriers }}</td>
+          <td class="{{ f.stops_class }}">{{ f.stops_label }}</td>
+          <td>{{ f.duration_str }}</td>
+          <td class="price">{{ f.currency }} {{ "{:,.0f}".format(f.price) }}</td>
+          <td>{% if f.deep_link %}<a class="book-link" href="{{ f.deep_link }}" target="_blank" rel="noopener">Book</a>{% else %}--{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    <span>Voyagair Report</span>
+    <span class="refresh-status" id="refresh-status"></span>
+  </footer>
+</div>
+
+<script>
+const FLIGHTS_DATA = {{ flights_json }};
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.dataset.theme === "dark" ? "light" : "dark";
+  html.dataset.theme = next;
+  document.getElementById("theme-btn").textContent = next === "dark" ? "Light" : "Dark";
+}
+
+// Calendar logic
+let calYear, calMonth;
+(function initCal() {
+  const dates = FLIGHTS_DATA.map(f => f.departure_iso).filter(Boolean).map(d => new Date(d));
+  if (dates.length) {
+    const first = new Date(Math.min(...dates));
+    calYear = first.getFullYear();
+    calMonth = first.getMonth();
+  } else {
+    const now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth();
+  }
+  renderCalendar();
+})();
+
+function prevMonth() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
+function nextMonth() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+
+function renderCalendar() {
+  const label = document.getElementById("month-label");
+  const grid = document.getElementById("calendar-grid");
+  if (!label || !grid) return;
+
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  label.textContent = months[calMonth] + " " + calYear;
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  const flightsByDay = {};
+  for (const f of FLIGHTS_DATA) {
+    if (!f.departure_iso) continue;
+    const d = new Date(f.departure_iso);
+    if (d.getFullYear() === calYear && d.getMonth() === calMonth) {
+      const day = d.getDate();
+      if (!flightsByDay[day]) flightsByDay[day] = [];
+      flightsByDay[day].push(f);
+    }
+  }
+
+  let html = "";
+  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  for (const dn of dayNames) html += `<div class="day-header">${dn}</div>`;
+  for (let i = 0; i < firstDay; i++) html += `<div class="day empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const flights = flightsByDay[d] || [];
+    const cls = flights.length ? "day has-flights" : "day";
+    html += `<div class="${cls}"><div class="day-num">${d}</div>`;
+    for (const fl of flights.slice(0, 3)) {
+      const label = `${fl.origin}-${fl.destination} $${fl.price}`;
+      if (fl.deep_link) {
+        html += `<a class="flight-chip" href="${fl.deep_link}" target="_blank" title="${label}">${label}</a>`;
+      } else {
+        html += `<span class="flight-chip" title="${label}">${label}</span>`;
+      }
+    }
+    if (flights.length > 3) html += `<span class="flight-chip">+${flights.length - 3} more</span>`;
+    html += `</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+{% if refresh_url %}
+let autoRefreshTimer = null;
+async function refreshReport() {
+  const btn = document.getElementById("refresh-btn");
+  const status = document.getElementById("refresh-status");
+  btn.textContent = "Refreshing...";
+  btn.disabled = true;
+  try {
+    const resp = await fetch("{{ refresh_url }}", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({format:"html"}) });
+    if (resp.ok) {
+      const html = await resp.text();
+      document.open(); document.write(html); document.close();
+    } else {
+      status.textContent = "Refresh failed: " + resp.statusText;
+    }
+  } catch(e) {
+    status.textContent = "Refresh error: " + e.message;
+  }
+  btn.textContent = "Refresh";
+  btn.disabled = false;
+}
+{% endif %}
+</script>
+</body>
+</html>

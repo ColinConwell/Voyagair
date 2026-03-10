@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import time
 from datetime import date
+from pathlib import Path
 
 from voyagair.core.config import VoyagairConfig, get_config
 from voyagair.core.graph.airports import AirportDatabase, get_airport_db
@@ -17,6 +19,27 @@ from voyagair.core.voyage.models import VoyageConfig, VoyageResults
 from voyagair.core.voyage.resolver import resolve_locations
 
 logger = logging.getLogger(__name__)
+
+_REGIONS_PATH = Path(__file__).parents[3] / "shared" / "schema" / "regions.json"
+
+def _load_region_countries() -> dict[str, list[str]]:
+    """Load region-to-country-code mapping from shared schema."""
+    try:
+        return json.loads(_REGIONS_PATH.read_text())
+    except Exception:
+        return {}
+
+
+def _region_country_codes(region_names: list[str]) -> set[str]:
+    """Resolve region names to a set of ISO country codes."""
+    regions = _load_region_countries()
+    codes: set[str] = set()
+    for name in region_names:
+        key = name.strip()
+        for rname, rcodes in regions.items():
+            if rname.lower() == key.lower():
+                codes.update(rcodes)
+    return codes
 
 
 class VoyageSearchOrchestrator:
@@ -91,6 +114,8 @@ class VoyageSearchOrchestrator:
                 origins, destinations, dep_dates, voyage, max_price, max_duration
             )
 
+        all_flights = self._apply_filters(all_flights, voyage)
+
         elapsed = time.monotonic() - start
         return VoyageResults(
             voyage_id=voyage.id,
@@ -98,6 +123,47 @@ class VoyageSearchOrchestrator:
             transport_options=all_transport,
             search_duration_seconds=round(elapsed, 2),
         )
+
+    def _apply_filters(
+        self, flights: list[FlightOffer], voyage: VoyageConfig
+    ) -> list[FlightOffer]:
+        """Post-search filtering for avoided airlines and routing regions."""
+        if not voyage.avoid_airlines and not voyage.avoid_routing_regions:
+            return flights
+
+        avoid_codes = {c.upper() for c in voyage.avoid_airlines}
+        avoid_countries = _region_country_codes(voyage.avoid_routing_regions) if voyage.avoid_routing_regions else set()
+
+        filtered: list[FlightOffer] = []
+        db = self._db
+
+        for offer in flights:
+            if avoid_codes:
+                carriers = {leg.carrier.upper() for leg in offer.legs if leg.carrier}
+                if carriers & avoid_codes:
+                    continue
+
+            if avoid_countries and db:
+                skip = False
+                for leg in offer.legs:
+                    for code in (leg.origin, leg.destination):
+                        airport = db.get(code)
+                        if airport and airport.country_code in avoid_countries:
+                            skip = True
+                            break
+                    if skip:
+                        break
+                if skip:
+                    continue
+
+            filtered.append(offer)
+
+        logger.info(
+            "Filters removed %d of %d flights (avoid_airlines=%s, avoid_regions=%s)",
+            len(flights) - len(filtered), len(flights),
+            voyage.avoid_airlines, voyage.avoid_routing_regions,
+        )
+        return filtered
 
     async def _search_direct(
         self,

@@ -30,6 +30,7 @@ dependencies = [
     "pandas",
     "jinja2",
     "python-dotenv",
+    "pyyaml",
 ]
 
 [project.scripts]
@@ -37,6 +38,7 @@ voyagair = "voyagair.cli.app:app"
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio", "ruff", "mypy"]
+pdf = ["weasyprint"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["voyagair"]
