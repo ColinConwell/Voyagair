@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.env
+.voyagair_cache/
+data/airports.csv
+data/routes.dat
+node_modules/
+frontend/dist/
+*.log
+.mypy_cache/
+.ruff_cache/
+.env.local

@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "voyagair"
+version = "0.1.0"
+description = "Optimized, configurable path-of-least-resistance travel planner and flight finder."
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.11"
+authors = [{ name = "developer", email = "developer@dev.com" }]
+dependencies = [
+    "httpx[http2]",
+    "pydantic>=2.0",
+    "networkx",
+    "python-tsp",
+    "typer>=0.9",
+    "rich",
+    "fastapi",
+    "uvicorn[standard]",
+    "websockets",
+    "diskcache",
+    "pyrate-limiter>=3.0",
+    "faster-flights",
+    "amadeus",
+    "litellm",
+    "orjson",
+    "geopy",
+    "pandas",
+    "jinja2",
+]
+
+[project.scripts]
+voyagair = "voyagair.cli.app:app"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "ruff", "mypy"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/voyagair"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

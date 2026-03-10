@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voyagair</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="header">
+        <div class="header-inner">
+          <h1 class="logo">Voyagair</h1>
+          <p class="tagline">Path-of-least-resistance travel planner</p>
+        </div>
+      </header>
+
+      <main class="main">
+        <section class="search-panel">
+          <form id="search-form" class="search-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="origins">From</label>
+                <input type="text" id="origins" placeholder="CPT, JNB" required />
+              </div>
+              <div class="form-group">
+                <label for="destinations">To</label>
+                <input type="text" id="destinations" placeholder="JFK, EWR" required />
+              </div>
+              <div class="form-group">
+                <label for="dates">Date</label>
+                <input type="date" id="dates" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group form-group-sm">
+                <label for="adults">Passengers</label>
+                <input type="number" id="adults" value="1" min="1" max="9" />
+              </div>
+              <div class="form-group form-group-sm">
+                <label for="cabin">Cabin</label>
+                <select id="cabin">
+                  <option value="economy">Economy</option>
+                  <option value="premium_economy">Premium Economy</option>
+                  <option value="business">Business</option>
+                  <option value="first">First</option>
+                </select>
+              </div>
+              <div class="form-group form-group-sm">
+                <label for="max-stops">Max Stops</label>
+                <select id="max-stops">
+                  <option value="">Any</option>
+                  <option value="0">Nonstop</option>
+                  <option value="1">1 stop</option>
+                  <option value="2">2 stops</option>
+                </select>
+              </div>
+              <div class="form-group form-group-sm">
+                <label for="sort">Sort By</label>
+                <select id="sort">
+                  <option value="price">Price</option>
+                  <option value="duration">Duration</option>
+                  <option value="stops">Stops</option>
+                </select>
+              </div>
+              <div class="form-group form-group-sm">
+                <label for="max-price">Max Price</label>
+                <input type="number" id="max-price" placeholder="No limit" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="search-btn">Search Flights</button>
+              <label class="stream-toggle">
+                <input type="checkbox" id="stream-mode" checked />
+                <span>Stream results</span>
+              </label>
+            </div>
+          </form>
+        </section>
+
+        <section class="results-panel">
+          <div class="results-header">
+            <h2 id="results-title">Results</h2>
+            <span id="results-count" class="results-count"></span>
+          </div>
+          <div id="results-status" class="results-status"></div>
+          <div id="results-table-container" class="results-table-container">
+            <table id="results-table" class="results-table">
+              <thead>
+                <tr>
+                  <th>Route</th>
+                  <th>Date</th>
+                  <th>Carrier</th>
+                  <th>Stops</th>
+                  <th>Duration</th>
+                  <th>Price</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody id="results-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="map-panel">
+          <h2>Route Map</h2>
+          <div id="map" class="map"></div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

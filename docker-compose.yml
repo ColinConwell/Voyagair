@@ -1,0 +1,20 @@
+services:
+  voyagair:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - cache:/app/.voyagair_cache
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    profiles:
+      - full
+
+volumes:
+  cache:
